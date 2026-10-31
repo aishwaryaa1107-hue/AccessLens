@@ -1,0 +1,4 @@
+-- Intentionally contains no sample hazards. Community markers must come from
+-- reports submitted by people, never from records that could look real.
+-- To exercise the workflow, configure the app with a non-production Supabase
+-- project, then submit an anonymous test report with a test location.

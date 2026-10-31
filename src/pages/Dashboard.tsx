@@ -1,0 +1,26 @@
+import { useEffect, useState } from 'react';
+import { Activity, ArrowRight, AudioLines, Camera, ChevronRight, CircleHelp, CloudOff, MapPinned, ShieldAlert, Sparkles, Wifi } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { backendConfigured } from '../services/supabase';
+import { getLocalReports } from '../services/reports';
+import type { ReportDraft } from '../types';
+
+const categoryName: Record<string, string> = { broken_footpath: 'Broken footpath', open_drain: 'Open drain', construction: 'Construction work', blocked_footpath: 'Blocked footpath', parked_vehicle: 'Parked vehicle obstruction', unsafe_crossing: 'Unsafe crossing', damaged_steps: 'Damaged steps', missing_ramp: 'Missing ramp', other: 'Other' };
+
+export default function Dashboard() {
+  const [reports, setReports] = useState<ReportDraft[]>([]);
+  useEffect(() => { let active = true; void getLocalReports().then((local) => { if (active) setReports(local.sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, 4)); }).catch(() => {}); return () => { active = false; }; }, []);
+  const online = navigator.onLine;
+  return <div className="page-wrap dashboard-page">
+    <div className="page-heading dashboard-heading"><div><div className="eyebrow muted-eyebrow"><span className="pulse-dot" /> YOUR AWARENESS SPACE</div><h1>Good to see you.</h1><p>Take a moment to get ready. Your assistance tools are here when you need them.</p></div><Link className="settings-shortcut" to="/settings"><Sparkles size={17} /> Set preferences <ChevronRight size={17} /></Link></div>
+    <section className="readiness-grid" aria-label="Service readiness">
+      <div className="readiness-card"><div className="readiness-icon teal-icon"><Camera size={20} /></div><div><b>Camera assistance</b><span>Ready when you are</span></div><span className="status-indicator" aria-label="Ready" /></div>
+      <div className="readiness-card"><div className="readiness-icon purple-icon"><Activity size={20} /></div><div><b>Detection model</b><span>Loads when assistance starts</span></div><span className="status-indicator status-pending" aria-label="Not loaded yet" /></div>
+      <div className="readiness-card"><div className="readiness-icon amber-icon">{online ? <Wifi size={20} /> : <CloudOff size={20} />}</div><div><b>{online ? 'Connected' : 'Offline mode'}</b><span>{online ? (backendConfigured ? 'Community sync available' : 'Community setup needed') : 'Reports save on this device'}</span></div><span className={`status-indicator ${online ? '' : 'status-warn'}`} aria-label={online ? 'Online' : 'Offline'} /></div>
+    </section>
+    <div className="dashboard-main-grid"><section className="primary-card"><div className="primary-card-orb" /><div className="primary-label"><span className="mini-live" /> LIVE AWARENESS</div><div className="primary-icon"><AudioLines size={27} /></div><h2>Listen to the space<br />around you.</h2><p>Start on-device object detection with voice and optional vibration cues.</p><Link className="button button-teal" to="/assist">Open live assistance <ArrowRight size={18} /></Link><div className="privacy-foot"><ShieldAlert size={15} /> Camera frames are processed locally and not saved.</div></section>
+      <section className="action-stack"><Link to="/report" className="action-card report-action"><span className="action-icon"><ShieldAlert size={21} /></span><span><b>Report a hazard</b><small>Share an access issue nearby</small></span><ArrowRight size={17} /></Link><Link to="/map" className="action-card map-action"><span className="action-icon"><MapPinned size={21} /></span><span><b>Explore the map</b><small>Browse community reports</small></span><ArrowRight size={17} /></Link><Link to="/onboarding" className="help-card"><CircleHelp size={19} /><span><b>New to AccessLens?</b><small>Review the accessible setup</small></span><ChevronRight size={18} /></Link></section></div>
+      <section className="recent-reports"><div className="recent-reports-heading"><div><div className="section-kicker">YOUR ACTIVITY</div><h2>Recent reports on this device</h2></div><Link to="/report">Create a report <ArrowRight size={15} /></Link></div>{reports.length ? <div className="recent-report-list">{reports.map((report) => <div className="recent-report-row" key={report.id}><span className="recent-marker"><ShieldAlert size={15} /></span><span><b>{categoryName[report.category] || 'Hazard report draft'}</b><small>{report.description || 'Add a description to finish this local draft.'}</small></span><span className={`status-pill status-${report.status}`}>{report.cloud_submitted ? report.local_image_archive ? 'Shared · photo local' : 'Shared' : report.ready_to_submit ? backendConfigured ? 'Pending sync' : 'Saved locally' : 'Draft'}</span></div>)}</div> : <div className="recent-empty">Reports saved in this browser appear here. Community reports are on the map.</div>}</section>
+      <section className="dashboard-bottom"><div><h3>Use the tools that already work for you.</h3><p>AccessLens is an added source of environmental information. It does not detect every obstacle or determine a safe path.</p></div><div className="bottom-illustration"><span /><span /><span /><span /><span /><i>+</i></div></section>
+  </div>;
+}
